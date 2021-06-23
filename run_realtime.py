@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Evaluate network')
-    parser.add_argument('--network', type=str, default='saved_data/cornell_rgbd_iou_0.96',
+    parser.add_argument('--network', type=str, default='trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98',
                         help='Path to saved network to evaluate')
     parser.add_argument('--use-depth', type=int, default=1,
                         help='Use Depth image for evaluation (1/0)')
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     # Connect to Camera
     logging.info('Connecting to camera...')
-    cam = RealSenseCamera(device_id=830112070066)
+    cam = RealSenseCamera(device_id=912112074213)
     cam.connect()
     cam_data = CameraData(include_depth=args.use_depth, include_rgb=args.use_rgb)
 

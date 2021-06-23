@@ -26,18 +26,24 @@ class GraspGenerator:
 
         # Connect to camera
         self.camera.connect()
-
+        
         # Load camera pose and depth scale (from running calibration)
         self.cam_pose = np.loadtxt('saved_data/camera_pose.txt', delimiter=' ')
         self.cam_depth_scale = np.loadtxt('saved_data/camera_depth_scale.txt', delimiter=' ')
 
-        homedir = os.path.join(os.path.expanduser('~'), "grasp-comms")
+        # self.cam_pose = np.loadtxt('grasp_common/camera_pose.txt', delimiter=' ')
+        # self.cam_depth_scale = np.loadtxt('saved_data/camera_depth_scale.txt', delimiter=' ')
+
+
+        # homedir = os.path.join(os.path.expanduser('~'), "grasp-comms")
+        homedir = "/home/nmail/handover_ws/src/baxter-pnp/grasp_common"
+        
         self.grasp_request = os.path.join(homedir, "grasp_request.npy")
         self.grasp_available = os.path.join(homedir, "grasp_available.npy")
         self.grasp_pose = os.path.join(homedir, "grasp_pose.npy")
 
         if visualize:
-            self.fig = plt.figure(figsize=(10, 10))
+            self.fig = plt.figure(figsize=(5, 5))
         else:
             self.fig = None
 
@@ -62,8 +68,19 @@ class GraspGenerator:
         q_img, ang_img, width_img = post_process_output(pred['pos'], pred['cos'], pred['sin'], pred['width'])
         grasps = detect_grasps(q_img, ang_img, width_img)
 
+        # print('1 grasps :', grasps)
         # Get grasp position from model output
-        pos_z = depth[grasps[0].center[0], grasps[0].center[1]] * self.cam_depth_scale - 0.04
+        print('depth[grasps[0].center[0], grasps[0].center[1]] :', depth[grasps[0].center[0] + self.cam_data.top_left[0]][grasps[0].center[1] + self.cam_data.top_left[1]])
+        # print('self.cam_depth_scale :', self.cam_depth_scale)
+        pos_z = depth[grasps[0].center[0] + self.cam_data.top_left[0]][grasps[0].center[1] + self.cam_data.top_left[1]] * self.cam_depth_scale# - 0.04
+
+        # print('grasps[0].center[1] + self.cam_data.top_left[1] - self.camera.intrinsics.ppx   ,   pos_z / self.camera.intrinsics.fx)')
+        # print('grasps[0].center[1] :',grasps[0].center[1])
+        # print('self.cam_data.top_left[1]: ', self.cam_data.top_left[1])
+        # print('self.camera.intrinsics.ppx :',self.camera.intrinsics.ppx)
+        # print('pos_z:', pos_z)
+        # print('self.camera.intrinsics.fy :', self.camera.intrinsics.fy)
+
         pos_x = np.multiply(grasps[0].center[1] + self.cam_data.top_left[1] - self.camera.intrinsics.ppx,
                             pos_z / self.camera.intrinsics.fx)
         pos_y = np.multiply(grasps[0].center[0] + self.cam_data.top_left[0] - self.camera.intrinsics.ppy,
@@ -97,6 +114,7 @@ class GraspGenerator:
             plot_grasp(fig=self.fig, rgb_img=self.cam_data.get_rgb(rgb, False), grasps=grasps, save=True)
 
     def run(self):
+
         while True:
             if np.load(self.grasp_request):
                 self.generate()
